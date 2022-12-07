@@ -67,7 +67,7 @@ body {
   top: 30px;
 }
 
-input[type="text"] {
+input[type="number"] {
   border: 0;
   border-bottom: 1px dashed white;
   background: none;
@@ -75,12 +75,12 @@ input[type="text"] {
   font-family: "bebas";
   font-size: 196px;
   height: 170px;
-  width: 150px;
+  width: 165px;
   text-align: center;
   outline: none;
 }
 
-input[type=text]:disabled {
+input[type=number]:disabled {
   border-bottom: none;
 }
 
