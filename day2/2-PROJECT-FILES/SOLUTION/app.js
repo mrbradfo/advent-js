@@ -65,15 +65,10 @@ const renderMenu = () => {
             ${
               !inCart
                 ? `<button class="add" onClick="addToCart(${index})">Add to Cart</button>`
-                : ""
-            }
-            ${
-              inCart
-                ? `<button class="in-cart" >
-                    <img src="images/check.svg" alt="Check" />
-                    In Cart
-                </button>`
-                : ""
+                : `<button class="in-cart" >
+                <img src="images/check.svg" alt="Check" />
+                In Cart
+            </button>`
             }
           </div>
         </li>

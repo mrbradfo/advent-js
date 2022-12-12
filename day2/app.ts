@@ -52,10 +52,10 @@ const menuItems = [
   },
 ];
 
-const menu = document.querySelector(".menu") as HTMLDivElement;
+const menu = document.querySelector("ul.menu") as HTMLDivElement;
 
 const renderMenu = (menuItems: MenuItem[]) => {
-  let menueString = menuItems
+  let menuString = menuItems
     .map((menuItem, index) => {
       const dollars = Math.floor(menuItem.price / 100);
       const cents = menuItem.price % 100;
@@ -72,19 +72,23 @@ const renderMenu = (menuItems: MenuItem[]) => {
         <div class="content">
           <p class="menu-item">${menuItem.name}</p>
           <p class="price">${dollars}.${cents}</p>
-
-          
-          <button class=${
-            menuItem.count > 0 ? "in-cart" : "add"
-          } onClick=addToCartOnClick()>
-            <img src="images/check.svg" alt="Check" />
-            In Cart
-          </button>
+          ${
+            menuItem.count > 0
+              ? `<button class="in-cart" onClick=addToCartOnClick()>
+          <img src="images/check.svg" alt="Check" />
+          In Cart
+        </button>`
+              : `<button class="add" onClick=addToCartOnClick()>
+       Add To Cart
+      </button>`
+          }
         </div>
-      </li>`;
+      </li>;
+    `;
     })
+
     .join("");
-  menu.innerHTML = menueString;
+  menu.innerHTML = menuString;
 };
 
 function addToCartOnClick() {
