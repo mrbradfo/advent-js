@@ -1,13 +1,13 @@
 //constant for api key
 const API_KEY = "NFQZ0IVcHrzFsm1yAr7zG2qqHebLBUcB";
-const CITY_CODE = "336877";
+const CITY_CODE = "336877"; //Tempe
 const CURRENT_TEMP_URL = `http://dataservice.accuweather.com/currentconditions/v1/${CITY_CODE}?apikey=${API_KEY}`;
-const FORECAST_URL = `http://dataservice.accuweather.com/forecasts/v1/daily/5day/${CITY_CODE}?apikey=${API_KEY}`;
+const FIVE_DAY_FORECAST_URL = `http://dataservice.accuweather.com/forecasts/v1/daily/5day/${CITY_CODE}?apikey=${API_KEY}`;
 
-//select current class
+//select temperature class
 const currentTempEl = document.querySelector(".temperature") as HTMLDivElement;
 
-//type definitions
+//type definition for current temperature
 type CurrentTemp = [
   {
     Temperature: {
@@ -25,6 +25,7 @@ type CurrentTemp = [
   }
 ];
 
+//type definition for Accuweather API response
 type WeatherData = {
   Date: string;
   EpochDate: number;
@@ -52,10 +53,13 @@ type WeatherData = {
     Icon: number;
     IconPhrase: string;
   };
+  Sources: Array<string>;
+  MobileLink: string;
+  Link: string;
 };
 
 type ForecastData = {
-  DailyForecasts: Array<WeatherData>;
+  DailyForecasts: WeatherData[];
 };
 
 type DaysOfWeekMap = {
@@ -85,7 +89,7 @@ type IconNameToSizeMap = {
 const weatherIcons: IconNameToSizeMap[] = [
   {
     name: "cloudy",
-    icons: ["cloudy", "mostly cloudy", "cloudy-windy", "fog", "dreary", "rain"],
+    icons: ["cloudy", "mostly cloudy", "cloudy-windy", "fog", "dreary", "rain", "windy"],
     size: { width: 264, height: 166 },
   },
   {
@@ -95,12 +99,7 @@ const weatherIcons: IconNameToSizeMap[] = [
   },
   {
     name: "stormy",
-    icons: [
-      "thunderstorm",
-      "t-storms",
-      "mostly cloudy w/ t-storms",
-      "partly sunny w/ t-storms",
-    ],
+    icons: ["thunderstorm", "t-storms", "mostly cloudy w/ t-storms", "partly sunny w/ t-storms"],
     size: { width: 246, height: 187 },
   },
   {
@@ -121,21 +120,14 @@ const weatherIcons: IconNameToSizeMap[] = [
   },
   {
     name: "rainy",
-    icons: [
-      "showers",
-      "rain",
-      "sleet",
-      "mostly cloudy w/ showers",
-      "partly sunny w/ showers",
-    ],
+    icons: ["showers", "rain", "sleet", "mostly cloudy w/ showers", "partly sunny w/ showers"],
     size: { width: 160, height: 222 },
   },
 ];
 
-// function to get the weather data from accuweather api
-
+// get the weather data from accuweather api
 async function getWeatherData(): Promise<ForecastData> {
-  const response = await fetch(FORECAST_URL);
+  const response = await fetch(FIVE_DAY_FORECAST_URL);
   const data: ForecastData = await response.json();
 
   updateUI(data);
@@ -144,39 +136,49 @@ async function getWeatherData(): Promise<ForecastData> {
 }
 
 function updateUI(forecastData: ForecastData) {
-  //update day of week and date
-
   //select all the elements with the class name of day-of-week
   const dayOfWeekEls = document.querySelectorAll(".day");
+
+  //loop through and update each day
   dayOfWeekEls.forEach((dayEl, index) => {
     const dayOfWeekEl = dayEl.querySelector(".day-of-week") as HTMLDivElement;
     const dateEl = dayEl.querySelector(".date") as HTMLDivElement;
     const barEl = dayEl.querySelector(".bar") as HTMLDivElement;
     const weatherIconEl = barEl.querySelector(".weather") as HTMLDivElement;
     const temp = barEl.querySelector(".temperature") as HTMLDivElement;
+    const description = barEl.querySelector(".description") as HTMLDivElement;
     const highEl = barEl.querySelector(".high") as HTMLDivElement;
     const lowEl = barEl.querySelector(".low") as HTMLDivElement;
-    const precipitationEl = barEl.querySelector(
-      ".precipitation"
-    ) as HTMLDivElement;
+    const precipitationEl = barEl.querySelector(".precipitation") as HTMLDivElement;
 
-    //todo finish updating all elements
-    const curDate = new Date(forecastData.DailyForecasts[index].Date);
+    // forecast data for the current day
+    const curDayForecast = forecastData.DailyForecasts[index];
+
+    // link to accuweather will open in a new tab
+    dayEl.setAttribute("href", curDayForecast.Link);
+    dayEl.setAttribute("target", "_blank");
+    // prevent tab nabbing
+    dayEl.setAttribute("rel", "noopener noreferrer");
+
+    // set the day of the week for the current day
+    const curDate = new Date(curDayForecast.Date);
     const dow = curDate.getDay();
     const dayOfWeek = daysOfWeekMap[dow];
     dayOfWeekEl.innerHTML = dayOfWeek;
 
+    // set the date for the current day
     const date = curDate.getDate();
     dateEl.innerHTML = date.toString();
 
-    const weatherText =
-      forecastData.DailyForecasts[index].Day.IconPhrase.toLocaleLowerCase();
+    // map the weather phrase to the correct icon
+    const dayWeatherPhrase = curDayForecast.Day.IconPhrase.toLocaleLowerCase();
     const weatherIcon = weatherIcons.find((icon) => {
-      if (icon.icons.includes(weatherText.toLowerCase())) {
+      if (icon.icons.includes(dayWeatherPhrase.toLowerCase())) {
         return icon.name;
       }
     });
 
+    // if no icon found throw an error
     if (!weatherIcon) {
       throw new Error("Weather icon not found");
     }
@@ -187,41 +189,36 @@ function updateUI(forecastData: ForecastData) {
                                   <use xlink:href="#${weatherIcon.name}"></use>
                                 </svg>`;
 
-    //add icon name to the bar div class list
+    // add icon name to the bar div class list to it is styled correctly
     barEl.classList.add(weatherIcon.name);
 
-    const high = forecastData.DailyForecasts[index].Temperature.Maximum.Value;
+    // set weather description
+    description.innerHTML = dayWeatherPhrase;
+
+    // set high and low temperatures
+    const high = curDayForecast.Temperature.Maximum.Value;
     highEl.innerHTML = `&uarr;${high.toString()}&deg;`;
 
-    //if not today then set current temp to high
+    // if not today then set current temp to high
     if (index !== 0) {
       temp.innerHTML = `${high.toString()}<span class="degrees">&deg;</span>`;
     }
 
-    const low = forecastData.DailyForecasts[index].Temperature.Minimum.Value;
+    const low = curDayForecast.Temperature.Minimum.Value;
     lowEl.innerHTML = `&darr;${low.toString()}&deg;`;
 
-    let precipitation =
-      forecastData.DailyForecasts[index].Day.PrecipitationIntensity;
-
-    //if precipitation is undefined, set it to 0
+    //set precipitation
+    let precipitation = curDayForecast.Day.PrecipitationIntensity;
     if (precipitation === undefined) {
-      precipitation = "0";
+      precipitation = "None";
     }
-    precipitationEl.innerHTML = ` <svg role="img" class="icon"> <use xlink:href="#precipitation"></use> </svg> ${precipitation}%`;
+    precipitationEl.innerHTML = ` <svg role="img" class="icon"> <use xlink:href="#precipitation"></use> </svg> ${precipitation}`;
   });
-}
-
-//function to get the weather icon
-function getWeatherIcon(iconName: string): string {
-  return `https://openweathermap.org/img/wn/${iconName}.png`;
 }
 
 async function getCurrentTemp(): Promise<string> {
   const response = await fetch(CURRENT_TEMP_URL);
   const data: CurrentTemp = await response.json();
-  console.log("Current Temp: " + data[0].Temperature.Imperial.Value + "°F");
-
   return data[0].Temperature.Imperial.Value.toString();
 }
 
@@ -233,5 +230,4 @@ function setCurrentTemp() {
 
 getWeatherData().then((data) => updateUI(data));
 
-getCurrentTemp();
 setCurrentTemp();

@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Krona+One&family=Oswald&display=swap');
 
 body {
-  background: #E9F5FA;
+  background: #355b6b;
   padding: 0;
   margin: 0;
   min-width: 100vw;
@@ -13,6 +13,7 @@ body {
 
 #weather {
   position: absolute;
+  z-index: -1;
 }
 
 .wrapper {
@@ -25,6 +26,7 @@ body {
   color: #4DB0D3;
   font-family: 'Krona One', sans-serif;
   text-align: center;
+  text-decoration: none;
 }
 
 .day-of-week {
@@ -87,8 +89,14 @@ body {
   color: var(--temperature);
   font-size: 7rem;
   position: relative;
-  padding-bottom: 60px;
+  padding-bottom: 24px;
 }
+
+.description {
+  color: white;
+  padding-bottom: 24px;
+}
+
 
 .degrees {
   position: absolute;
